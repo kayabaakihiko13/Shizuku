@@ -1,0 +1,9 @@
+# efek dari build
+build/
+*egg-info/
+
+# efek dari precommit
+*_cache
+
+# node
+node_modules/
