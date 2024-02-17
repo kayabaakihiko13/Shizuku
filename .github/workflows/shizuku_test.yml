@@ -27,7 +27,7 @@ jobs:
 
       - name: Add Python to PATH
         run: |
-          echo "::add-path::$(python -m site --user-base)/bin"
+          echo "PATH=\$PATH:$(python -m site --user-base)/bin" >> $GITHUB_ENV
 
       - name: Install pytest
         run: |
