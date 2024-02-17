@@ -1,13 +1,22 @@
 from setuptools import setup
+from os import path
+import io
+import platform
 
-with open("requirements.txt", encoding="utf-8") as file:
-    requitments = file.read().splitlines()
+info = path.abspath(path.dirname(__file__))
+with io.open(path.join(info, "requirements.txt"), encoding="utf-8") as file:
+    core_require = file.read().split("\n")
+    if platform.system == "windows":
+        core_require.append("pywin32")
+
+install_require = [x.strip() for x in core_require if "git+" not in x]
 
 setup(
     name="Shizuku",
     version="0.0.1",
     description="Scraping Data Google api With Serpapi",
-    install_requires=requitments,
+    packages=["Shizuku"],
+    install_requires=install_require,
     python_requires=">=3.10",
     license="MIT License",
     classifiers=[

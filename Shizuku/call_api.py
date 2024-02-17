@@ -1,52 +1,103 @@
 from serpapi import GoogleSearch
 import os
 from dotenv import load_dotenv
+from typing import Optional
+import csv
 
 
-def ScarapingGoogleMap(query: str, api_key: str, lat: float, long: float):
+def ScrapingGoogleMap(
+    query: str,
+    api_key: Optional[str] = None,
+    lat: Optional[float] = None,
+    long: Optional[float] = None,
+    num_pages: int = 1,
+    results_per_page: int = 10,
+) -> None:
+    # Check if api_key is provided, otherwise load from environment
+    if query is None:
+        raise ValueError("masukan kata kunci nya")
     if api_key is None:
-        api_key = os.environ.get("SERPAPI_KEY")
-
-    params = {
-        "engine": "google_maps",
-        "q": query,
-        "api_key": api_key,
-        "ll": f"@{lat},{long},15.1z",
-    }
-    search = GoogleSearch(params)
-    result = search.get_dict()
-    return result.get("local_results", [])
-
-
-def main():
-    try:
-        # Load environment variables
         load_dotenv()
         api_key = os.environ.get("SERPAPI_KEY")
 
-        if not api_key:
-            raise ValueError("SerpApi key not found in environment variables.")
+    # Check if lat and long are provided
+    if lat is None or long is None:
+        raise ValueError("Please provide both latitude and longitude.")
 
-        # Set search parameters
+    # Check if the number of pages is valid
+    if num_pages <= 0:
+        raise ValueError("Number of pages should be greater than 0.")
+
+    # Check data types for lat and long
+    if not isinstance(lat, float) or not isinstance(long, float):
+        raise ValueError("Please provide valid latitude and longitude.")
+
+    results = []
+
+    for page in range(num_pages):
+        start_index = page * results_per_page
         params = {
             "engine": "google_maps",
-            "q": "Mixue",
+            "q": query,
             "api_key": api_key,
-            "ll": f"@{-7.2575},{112.7521},15.1z",
+            "ll": f"@{lat},{long},15.1z",
+            "start": start_index,
         }
-
-        # Perform the Google Maps search
         search = GoogleSearch(params)
         result = search.get_dict()
-
-        # Print local results
         local_results = result.get("local_results", [])
-        print("Local results:")
-        for place in local_results:
-            print(place)
+        results.extend(local_results)
 
-    except Exception as e:
-        print(f"Error: {e}")
+        # Check if there are more pages
+        if len(local_results) < results_per_page:
+            break
+    # saving data in csv
+    with open("maps-results.csv", "w", newline="") as csvfile:
+        csv_writer = csv.writer(csvfile)
+        # membuat header pada data csv
+        csv_writer.writerow(
+            [
+                "title",
+                "place_id",
+                "gps_coordinates",
+                "rating",
+                "reviews",
+                "type",
+                "address",
+                "operating_hours",
+                "phone",
+                "website",
+                "description",
+                "service_options",
+            ]
+        )
+        for place in results:
+            csv_writer.writerow(
+                [
+                    place.get("title"),
+                    place.get("place_id"),
+                    place.get("gps_coordinates", {}).get("latitude"),
+                    place.get("gps_coordinates", {}).get("longitude"),
+                    place.get("rating"),
+                    place.get("reviews"),
+                    place.get("type"),
+                    place.get("address"),
+                    place.get("operating_hours"),
+                    place.get("phone"),
+                    place.get("website"),
+                    place.get("description"),
+                    place.get("service_options", {}).get("dine_in"),
+                    place.get("service_options", {}).get("takeout"),
+                    place.get("service_options", {}).get("no_contact_delivery"),
+                ]
+            )
+
+
+def main():
+    results = ScrapingGoogleMap(
+        query="Mixue", lat=-7.275612, long=112.6302807, num_pages=5, results_per_page=20
+    )
+    print(results)
 
 
 if __name__ == "__main__":
