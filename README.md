@@ -13,10 +13,12 @@ pip install git+https://github.com/kayabaakihiko13/Shizuku.git
 ```
 
 ## Example
-```sh
-ScrapingGoogleMap(
-        query="Kopi Kenangan", lat=-7.275612, long=112.6302807, num_pages=5, results_per_page=20
-    )
+```py
+from Shizuku.call_api import ScrapingGoogleMap
+api_key = "0aad998d63a0e029da9c884973946509231fb2209ee41f18cf1f6a9eadf3ec2d"
+result = ScrapingGoogleMap(
+    query="Mixue",api_key=api_key,lat=-7.275612, long=112.6302807, num_pages=5, results_per_page=20
+)
 ```
 dijalankan nanti muncul file bernama `maps-results.csv` setelah menjalankan kode tersebut.
 
