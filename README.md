@@ -11,3 +11,15 @@ kamu bisa menginstall package `Shizuku` melalui via pip dengan cara
 ```sh
 pip install git+https://github.com/kayabaakihiko13/Shizuku.git
 ```
+
+## Example
+```sh
+ScrapingGoogleMap(
+        query="Kopi Kenangan", lat=-7.275612, long=112.6302807, num_pages=5, results_per_page=20
+    )
+```
+dijalankan nanti muncul file bernama `maps-results.csv` setelah menjalankan kode tersebut.
+
+untuk lebih lanjutnya bisa dibuka google collab seperti ini
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/16xOhPkdKMpohz3OiJpDY5qYLNrSzqn4H?usp=sharing)
