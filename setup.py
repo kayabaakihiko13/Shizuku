@@ -16,6 +16,7 @@ setup(
     version="0.0.1",
     description="Scraping Data Google api With Serpapi",
     packages=["Shizuku"],
+    package_data={"Shizuku": ["secret_key/.env"]},
     install_requires=install_require,
     python_requires=">=3.10",
     license="MIT License",
