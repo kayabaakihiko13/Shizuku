@@ -1,23 +1,38 @@
 from serpapi import GoogleSearch
 import os
 from dotenv import load_dotenv
-from typing import Optional
-import csv
+from typing import Optional, Union
+from pathlib import Path
+import pandas as pd
 
 
-def ScrapingGoogleMap(
+def scraping_google_map(
     query: str,
     api_key: Optional[str] = None,
     lat: Optional[float] = None,
     long: Optional[float] = None,
     num_pages: int = 1,
     results_per_page: int = 10,
-) -> None:
-    # Check if api_key is provided, otherwise load from environment
-    if query is None:
-        raise ValueError("masukan kata kunci nya")
+    saving_option: Optional[bool] = True,
+) -> Union[None, pd.DataFrame]:
+    """
+    Perform Google Maps scraping based on the given parameters.
+
+    Args:
+        query (str): The search query.
+        api_key (str, optional): Google API key. If not provided, it will be loaded from environment.
+        lat (float, optional): Latitude.
+        long (float, optional): Longitude.
+        num_pages (int): Number of pages to scrape.
+        results_per_page (int): Results per page.
+        saving_option (bool): Whether to save the results to a CSV file.
+
+    Returns:
+        Union[None, pd.DataFrame]: DataFrame containing the results or None if saving_option is True.
+    """
     if api_key is None:
-        load_dotenv()
+        dotenv_path = Path("Shizuku/secret_key/.env")
+        load_dotenv(dotenv_path=dotenv_path)
         api_key = os.environ.get("SERPAPI_KEY")
 
     # Check if lat and long are provided
@@ -29,7 +44,7 @@ def ScrapingGoogleMap(
         raise ValueError("Number of pages should be greater than 0.")
 
     # Check data types for lat and long
-    if not isinstance(lat, float) or not isinstance(long, float):
+    if not isinstance(lat, (int, float)) or not isinstance(long, (int, float)):
         raise ValueError("Please provide valid latitude and longitude.")
 
     results = []
@@ -51,53 +66,87 @@ def ScrapingGoogleMap(
         # Check if there are more pages
         if len(local_results) < results_per_page:
             break
-    # saving data in csv
-    with open("maps-results.csv", "w", newline="") as csvfile:
-        csv_writer = csv.writer(csvfile)
-        # membuat header pada data csv
-        csv_writer.writerow(
-            [
-                "title",
-                "place_id",
-                "gps_coordinates",
-                "rating",
-                "reviews",
-                "type",
-                "address",
-                "operating_hours",
-                "phone",
-                "website",
-                "description",
-                "service_options",
-            ]
-        )
-        for place in results:
-            csv_writer.writerow(
-                [
-                    place.get("title"),
-                    place.get("place_id"),
-                    place.get("gps_coordinates", {}).get("latitude"),
-                    place.get("gps_coordinates", {}).get("longitude"),
-                    place.get("rating"),
-                    place.get("reviews"),
-                    place.get("type"),
-                    place.get("address"),
-                    place.get("operating_hours"),
-                    place.get("phone"),
-                    place.get("website"),
-                    place.get("description"),
-                    place.get("service_options", {}).get("dine_in"),
-                    place.get("service_options", {}).get("takeout"),
-                    place.get("service_options", {}).get("no_contact_delivery"),
-                ]
-            )
+    df = pd.DataFrame(
+        results,
+        columns=[
+            "position",
+            "title",
+            "place_id",
+            "reviews_link",
+            "photos_link",
+            "gps_coordinates",
+            "place_id_search",
+            "provider_id",
+            "rating",
+            "reviews",
+            "price",
+            "type",
+            "types",
+            "address",
+            "open_state",
+            "hours",
+            "operating_hours",
+            "phone",
+            "website",
+            "description",
+            "service_options",
+            "order_online",
+            "thumbnail",
+        ],
+    )
+    if saving_option:
+        df.to_csv("maps-results.csv", index=False)
+    else:
+        return df
+
+
+def scraping_google_map_review(
+    place_ids: Union[pd.DataFrame, list],
+    api_key: Optional[str] = None,
+    save_option: Optional[bool] = True,
+) -> Union[None, pd.DataFrame]:
+    """
+    Perform Google Maps reviews scraping based on the given place IDs.
+
+    Args:
+        place_ids (Union[pd.DataFrame, list]): DataFrame or list of place IDs.
+        api_key (str, optional): Google API key. If not provided, it will be loaded from environment.
+        save_option (bool): Whether to save the results to a CSV file.
+
+    Returns:
+        Union[None, pd.DataFrame]: DataFrame containing the reviews or None if save_option is True.
+    """
+    if api_key is None:
+        dotenv_path = Path("Shizuku/secret_key/.env")
+        load_dotenv(dotenv_path=dotenv_path)
+        api_key = os.environ.get("SERPAPI_KEY")
+
+    reviews_data = []
+
+    for place_id in place_ids:
+        params = {"engine": "google_maps_reviews", "place_id": place_id, "api_key": api_key}
+        search = GoogleSearch(params)
+        results = search.get_dict()
+        place_reviews = results.get("reviews", [])
+        reviews_data.extend(place_reviews)
+
+    df = pd.DataFrame(reviews_data)
+
+    if save_option:
+        df.to_csv("reviews-maps.csv", index=False)
+    else:
+        return df
 
 
 def main():
-    results = ScrapingGoogleMap(
-        query="Mixue", lat=-7.275612, long=112.6302807, num_pages=5, results_per_page=20
+    results = scraping_google_map(
+        query="Mixue",
+        lat=-7.275612,
+        long=112.6302807,
+        num_pages=5,
+        results_per_page=20,
     )
-    print(results)
+    result_id = scraping_google_map_review(results["place_id"], save_option=True)
 
 
 if __name__ == "__main__":
