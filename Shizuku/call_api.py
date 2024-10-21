@@ -124,7 +124,11 @@ def scraping_google_map_review(
     reviews_data = []
 
     for place_id in place_ids:
-        params = {"engine": "google_maps_reviews", "place_id": place_id, "api_key": api_key}
+        params = {
+            "engine": "google_maps_reviews",
+            "place_id": place_id,
+            "api_key": api_key,
+        }
         search = GoogleSearch(params)
         results = search.get_dict()
         place_reviews = results.get("reviews", [])
